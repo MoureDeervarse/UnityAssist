@@ -1,8 +1,10 @@
 ﻿// Updated in https://github.com/MoureDeervarse/UnityAssist
-using UnityEditor;
-using UnityEditor.Callbacks;
 using System.Reflection;
 using System.Collections.Generic;
+
+using UnityEngine;
+using UnityEditor;
+using UnityEditor.Callbacks;
 
 public class FilePaletteWindow : EditorWindow
 {

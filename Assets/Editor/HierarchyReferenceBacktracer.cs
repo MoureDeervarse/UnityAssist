@@ -1,8 +1,9 @@
 ﻿// Updated in https://github.com/MoureDeervarse/UnityAssist
-using UnityEditor;
-using UnityEngine;
 using System.Reflection;
 using System.Collections.Generic;
+
+using UnityEditor;
+using UnityEngine;
 
 public class HierarchyReferenceBacktracer : EditorWindow
 {
@@ -42,7 +43,7 @@ public class HierarchyReferenceBacktracer : EditorWindow
     }
 
     private const string LOADING_TITLE = "Loaindg";
-    private const string LOADING_DESC = "Now backtrace objects in hierarchy...";
+    private const string LOADING_DESC = "Now backtracing objects in hierarchy...";
     public void BacktraceReferences(Transform trans)
     {
         if (null == trans)
@@ -116,7 +117,7 @@ public class HierarchyReferenceBacktracer : EditorWindow
             }
             foreach (object elem in arr)
             {
-                if (null != elem && comp == elem)
+                if (null != elem && comp == (elem as Object))
                 {
                     int elemIdx = System.Array.IndexOf(arr, elem);
                     return string.Format("{0}.{1}[{2}]", obj.GetType().ToString(), fieldInfo.Name, elemIdx);
@@ -126,7 +127,7 @@ public class HierarchyReferenceBacktracer : EditorWindow
         else
         {
             object value = fieldInfo.GetValue(obj);
-            if (null != value && comp == value)
+            if (null != value && comp == (value as Object))
             {
                 return string.Format("{0}.{1}", obj.GetType().ToString(), fieldInfo.Name);
             }
