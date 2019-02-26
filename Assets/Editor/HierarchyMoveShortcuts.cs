@@ -1,177 +1,190 @@
 ﻿// Updated in https://github.com/MoureDeervarse/UnityAssist
+using System;
+using System.Linq;
+using System.Collections.Generic;
+
 using UnityEngine;
 using UnityEditor;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 
-public class HierarchyMoveShortcuts
+namespace UnityAssist
 {
-	[MenuItem("Edit/Hotkeys/Selected Move Up &UP")]
-    private static void MoveObjectUp()
+    public class HierarchyMoveShortcuts
     {
-        HierachyMoveProcess(false, selectedArr => 
+        [MenuItem("Edit/Hotkeys/Selected Move Up &UP")]
+        private static void MoveUpObject()
         {
-            foreach (Transform trans in selectedArr)
+            HierachyMoveProcess(false, selectedArr =>
             {
-                int siblingIdx = trans.GetSiblingIndex();
-                if(null == trans.parent)
+                foreach (Transform trans in selectedArr)
                 {
-                    if (siblingIdx > 0 && !Array.Exists(selectedArr, t => t.GetSiblingIndex() == siblingIdx - 1))
+                    int siblingIdx = trans.GetSiblingIndex();
+                    // on top of the hierarchy
+                    if (null == trans.parent)
+                    {
+                        if (siblingIdx > 0 && !Array.Exists(selectedArr, t => t.GetSiblingIndex() == siblingIdx - 1))
+                        {
+                            trans.SetSiblingIndex(siblingIdx - 1);
+                        }
+                    }
+                    // is first index in parent
+                    else if (0 == siblingIdx)
+                    {
+                        int dstIdx = trans.parent.GetSiblingIndex();
+                        trans.SetParent(trans.parent.parent);
+                        trans.SetSiblingIndex(dstIdx);
+                    }
+                    // middle of sibling
+                    else
                     {
                         trans.SetSiblingIndex(siblingIdx - 1);
                     }
+                    EditorUtility.SetDirty(trans);
                 }
-                else if(0 == siblingIdx)
-                {
-                    int dstIdx = trans.parent.GetSiblingIndex();
-                    trans.SetParent(trans.parent.parent);
-                    trans.SetSiblingIndex(dstIdx);
-                }
-                else
-                {
-                    trans.SetSiblingIndex(siblingIdx - 1);
-                }
-                EditorUtility.SetDirty(trans);
-            }
-        });
-    }
+            });
+        }
 
-    [MenuItem("Edit/Hotkeys/Selected Move Down &DOWN")]
-    private static void MoveObjectDown()
-    {
-        HierachyMoveProcess(true, selectedArr =>
+        [MenuItem("Edit/Hotkeys/Selected Move Down &DOWN")]
+        private static void MoveDownObject()
         {
-            foreach (Transform trans in selectedArr)
+            HierachyMoveProcess(true, selectedArr =>
             {
-                int siblingIdx = trans.GetSiblingIndex();
-                if (null == trans.parent)
+                foreach (Transform trans in selectedArr)
                 {
-                    if(!Array.Exists(selectedArr, t => t.GetSiblingIndex() == (siblingIdx + 1)))
+                    int siblingIdx = trans.GetSiblingIndex();
+
+                    if (null == trans.parent)
+                    {
+                        if (!Array.Exists(selectedArr, t => t.GetSiblingIndex() == (siblingIdx + 1)))
+                        {
+                            trans.SetSiblingIndex(siblingIdx + 1);
+                        }
+                    }
+                    // is last index in parent
+                    else if ((trans.parent.childCount - 1) == siblingIdx)
+                    {
+                        int dstIdx = trans.parent.GetSiblingIndex();
+                        trans.SetParent(trans.parent.parent);
+                        trans.SetSiblingIndex(dstIdx + 1);
+                    }
+                    else
                     {
                         trans.SetSiblingIndex(siblingIdx + 1);
                     }
+                    EditorUtility.SetDirty(trans);
                 }
-                else if ((trans.parent.childCount - 1) == siblingIdx)
-                {
-                    int dstIdx = trans.parent.GetSiblingIndex();
-                    trans.SetParent(trans.parent.parent);
-                    trans.SetSiblingIndex(dstIdx+1);
-                }
-                else
-                {
-                    trans.SetSiblingIndex(siblingIdx + 1);
-                }
-                EditorUtility.SetDirty(trans);
-            }
-        });
-    }
+            });
+        }
 
-    [MenuItem("Edit/Hotkeys/Selected Move In &RIGHT")]
-    private static void MoveObjectInside()
-    {
-        HierachyMoveProcess(false, selectedArr =>
+        [MenuItem("Edit/Hotkeys/Selected Move In &RIGHT")]
+        private static void MoveInsideObject()
         {
-            foreach (Transform trans in selectedArr)
+            HierachyMoveProcess(false, selectedArr =>
             {
-                int siblingIdx = trans.GetSiblingIndex();
-                if (siblingIdx <= 0)
+                foreach (Transform trans in selectedArr)
                 {
-                    continue;
-                }
-                if(null != trans.parent)
-                {
-                    trans.SetParent(trans.parent.GetChild(siblingIdx - 1));
-                    trans.SetSiblingIndex(trans.parent.childCount - 1);
-                }
-                else
-                {
-                    Transform aboveTrans = Resources.FindObjectsOfTypeAll<Transform>().First(t =>
+                    int siblingIdx = trans.GetSiblingIndex();
+                    // there is no object to dig into
+                    if (siblingIdx <= 0)
                     {
-                        return (null == t.parent && t.GetSiblingIndex() == (siblingIdx - 1) && HideFlags.None == t.hideFlags);
-                    });
-                    trans.SetParent(aboveTrans);
-                    trans.SetSiblingIndex(aboveTrans.childCount - 1);
-                }
-                var hierarchyType = typeof(EditorWindow).Assembly.GetType("UnityEditor.SceneHierarchyWindow");
-                var foldMethod = hierarchyType.GetMethod("SetExpandedRecursive");
-                EditorApplication.ExecuteMenuItem("Window/Hierarchy");
-                EditorWindow hierarchy = EditorWindow.focusedWindow;
-                // Foldout folded parent hierarchy
-                foldMethod.Invoke(hierarchy, new object[] { trans.gameObject.GetInstanceID(), true });
-                // Fold moved object hierarchy that unfolded by below foldout process
-                foldMethod.Invoke(hierarchy, new object[] { trans.gameObject.GetInstanceID(), false });
-                EditorUtility.SetDirty(trans);
-            }
-        });
-    }
+                        continue;
+                    }
 
-    [MenuItem("Edit/Hotkeys/Selected Move Out &LEFT")]
-    private static void MoveObjectOutside()
-    {
-        HierachyMoveProcess(true, selectedArr =>
+                    // it is on parent hierarchy and has a sibling
+                    if (null != trans.parent)
+                    {
+                        trans.SetParent(trans.parent.GetChild(siblingIdx - 1));
+                        trans.SetSiblingIndex(trans.parent.childCount - 1);
+                    }
+                    else
+                    {
+                        Transform aboveTrans = Resources.FindObjectsOfTypeAll<Transform>().First(t =>
+                        {
+                            bool isAboveTrans = t.GetSiblingIndex() == (siblingIdx - 1);
+                            return (null == t.parent && isAboveTrans && HideFlags.None == t.hideFlags);
+                        });
+                        trans.SetParent(aboveTrans);
+                        trans.SetSiblingIndex(aboveTrans.childCount - 1);
+                    }
+
+                    var hierarchyType = typeof(EditorWindow).Assembly.GetType("UnityEditor.SceneHierarchyWindow");
+                    var foldMethod = hierarchyType.GetMethod("SetExpandedRecursive");
+                    EditorWindow hierarchy = EditorWindow.focusedWindow;
+                    // Foldout folded parent hierarchy
+                    foldMethod.Invoke(hierarchy, new object[] { trans.gameObject.GetInstanceID(), true });
+                    // Fold moved object hierarchy that unfolded by below foldout process
+                    foldMethod.Invoke(hierarchy, new object[] { trans.gameObject.GetInstanceID(), false });
+                    EditorUtility.SetDirty(trans);
+                }
+            });
+        }
+
+        [MenuItem("Edit/Hotkeys/Selected Move Out &LEFT")]
+        private static void MoveOutsideObject()
         {
-            foreach (Transform trans in selectedArr)
+            HierachyMoveProcess(true, selectedArr =>
             {
-                if(null == trans.parent)
+                foreach (Transform trans in selectedArr)
                 {
-                    continue;
+                    if (null == trans.parent)
+                    {
+                        continue;
+                    }
+                    int dstIdx = trans.parent.GetSiblingIndex() + 1;
+                    trans.SetParent(trans.parent.parent);
+                    trans.SetSiblingIndex(dstIdx);
+                    EditorUtility.SetDirty(trans);
                 }
-                int dstIdx = trans.parent.GetSiblingIndex() + 1;
-                trans.SetParent(trans.parent.parent);
-                trans.SetSiblingIndex(dstIdx);
-                EditorUtility.SetDirty(trans);
+            });
+        }
+
+        private static bool IsHierarchySelected()
+        {
+            // must be selection is not empty && selected objects in hierarchy view 
+            return (Selection.transforms.Length > 0 && !AssetDatabase.Contains(Selection.transforms[0]));
+        }
+
+        private delegate void Callback(Transform[] transforms);
+        private static void HierachyMoveProcess(bool reverseArr, Callback callback)
+        {
+            if (!IsHierarchySelected())
+            {
+                return;
             }
-        });
-    }
-
-    private static bool IsHierarchySelected()
-    {
-        // Exit if selection is empty or select project view objects
-        return (Selection.transforms.Length > 0 && !AssetDatabase.Contains(Selection.transforms[0]));
-    }
-
-    private delegate void Callback(Transform[] transforms);
-    private static void HierachyMoveProcess(bool reverseArr, Callback callback)
-    {
-        if (!IsHierarchySelected())
-        {
-            return;
-        }
-        Transform[] selectedArr = Selection.transforms;
-        Array.Sort(selectedArr, new HierarchySiblingComparer(reverseArr));
-        callback(selectedArr);
-        if (!Application.isPlaying)
-        {
-            UnityEditor.SceneManagement.EditorSceneManager.MarkAllScenesDirty();
+            Transform[] selectedArr = Selection.transforms;
+            Array.Sort(selectedArr, new HierarchySiblingComparer(reverseArr));
+            callback(selectedArr);
+            if (!Application.isPlaying)
+            {
+                UnityEditor.SceneManagement.EditorSceneManager.MarkAllScenesDirty();
+            }
         }
     }
-}
 
-public class HierarchySiblingComparer : IComparer<Transform>
-{
-    private int reverseValue = 1;
-
-    public HierarchySiblingComparer(bool isReverse)
+    public class HierarchySiblingComparer : IComparer<Transform>
     {
-        reverseValue = isReverse ? -1 : 1;
-    }
+        private int reverseValue = 1;
 
-    public int Compare(Transform a, Transform b)
-    {
-        return (GetTotalSiblingIndex(a) - GetTotalSiblingIndex(b)) * reverseValue;
-    }
-
-    private int GetTotalSiblingIndex(Transform trans, int stackIdx = 0)
-    {
-        int totalIdx = stackIdx + trans.GetSiblingIndex();
-        if (null == trans.parent)
+        public HierarchySiblingComparer(bool isReverse)
         {
-            return totalIdx - 1;
+            reverseValue = isReverse ? -1 : 1;
         }
-        else
+
+        public int Compare(Transform a, Transform b)
         {
-            return GetTotalSiblingIndex(trans.parent, totalIdx + 1);
+            return (GetTotalSiblingIndex(a) - GetTotalSiblingIndex(b)) * reverseValue;
+        }
+
+        private int GetTotalSiblingIndex(Transform trans, int stackIdx = 0)
+        {
+            int totalIdx = stackIdx + trans.GetSiblingIndex();
+            if (null == trans.parent)
+            {
+                return totalIdx - 1;
+            }
+            else
+            {
+                return GetTotalSiblingIndex(trans.parent, totalIdx + 1);
+            }
         }
     }
 }
