@@ -36,6 +36,7 @@ namespace UnityAssist
         private const string SAVE_NAME = "FilePalette";
 
         private List<FileItem> items;
+        private List<FileItem> drawItems;
         private Vector2 scrollPos;
 
         private void OnEnable()
@@ -60,7 +61,8 @@ namespace UnityAssist
         private void OnGUI()
         {
             scrollPos = EditorGUILayout.BeginScrollView(scrollPos, false, false);
-            items.ForEach(DrawItemLine);
+            drawItems = new List<FileItem>(items);
+            drawItems.ForEach(DrawItemLine);
             EditorGUILayout.EndScrollView();
             CheckDragAndDrop();
         }
