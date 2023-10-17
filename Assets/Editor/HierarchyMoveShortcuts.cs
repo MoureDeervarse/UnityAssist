@@ -86,7 +86,7 @@ namespace UnityAssist
                     // there is no object to dig into
                     if (siblingIdx <= 0)
                     {
-                        continue;
+                        break;
                     }
 
                     // it is on parent hierarchy and has a sibling
