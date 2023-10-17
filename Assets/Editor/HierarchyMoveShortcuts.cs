@@ -10,7 +10,7 @@ namespace UnityAssist
 {
     public class HierarchyMoveShortcuts
     {
-        [MenuItem("Edit/Hotkeys/Selected Move Up &UP")]
+        [MenuItem("Edit/Hotkeys/MoveUp #%k")]
         private static void MoveUpObject()
         {
             HierachyMoveProcess(false, selectedArr =>
@@ -43,7 +43,7 @@ namespace UnityAssist
             });
         }
 
-        [MenuItem("Edit/Hotkeys/Selected Move Down &DOWN")]
+        [MenuItem("Edit/Hotkeys/Selected Move Down #%j")]
         private static void MoveDownObject()
         {
             HierachyMoveProcess(true, selectedArr =>
@@ -75,7 +75,7 @@ namespace UnityAssist
             });
         }
 
-        [MenuItem("Edit/Hotkeys/Selected Move In &RIGHT")]
+        [MenuItem("Edit/Hotkeys/Selected Move In #%l")]
         private static void MoveInsideObject()
         {
             HierachyMoveProcess(false, selectedArr =>
@@ -118,7 +118,7 @@ namespace UnityAssist
             });
         }
 
-        [MenuItem("Edit/Hotkeys/Selected Move Out &LEFT")]
+        [MenuItem("Edit/Hotkeys/Selected Move Out #%h")]
         private static void MoveOutsideObject()
         {
             HierachyMoveProcess(true, selectedArr =>
